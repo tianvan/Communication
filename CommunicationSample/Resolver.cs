@@ -8,13 +8,13 @@ namespace CommunicationSample
         private const int Limit = 489;
         private const int TypeIdSize = 1;
         private const int ObjectIdSize = 16;
-        private const int ObjectSize = 16;
+        private const int ObjectSize = 4;
         private const int StartIndexSize = 2;
         private const int EndIndexSize = 2;
 
         private readonly IDictionary<Guid, byte[]> _objectMap = new Dictionary<Guid, byte[]>();
         private readonly IDictionary<Guid, Types> _typeMap = new Dictionary<Guid, Types>();
-        private readonly IDictionary<Guid, long> _receivedMap = new Dictionary<Guid, long>();
+        private readonly IDictionary<Guid, uint> _receivedMap = new Dictionary<Guid, uint>();
 
         public void FillObjct(byte[] input)
         {
@@ -25,7 +25,7 @@ namespace CommunicationSample
 
             var typeId = (Types)input.SubArray(0, TypeIdSize)[0];
             var guid = new Guid(input.SubArray(TypeIdSize, ObjectIdSize));
-            var totalSize = BitConverter.ToInt32(input.SubArray(TypeIdSize + ObjectIdSize, ObjectSize), 0);
+            var totalSize = BitConverter.ToUInt32(input.SubArray(TypeIdSize + ObjectIdSize, ObjectSize), 0);
 
             if (!_objectMap.ContainsKey(guid))
             {
@@ -46,7 +46,7 @@ namespace CommunicationSample
             var endIndex = BitConverter.ToUInt16(input.SubArray(TypeIdSize + ObjectIdSize + ObjectSize + StartIndexSize, EndIndexSize), 0);
             var payload = input.SubArray(TypeIdSize + ObjectIdSize + ObjectSize + StartIndexSize + EndIndexSize, endIndex - startIndex);
             Array.Copy(payload, 0, _objectMap[guid], startIndex, payload.Length);
-            _receivedMap[guid] += payload.Length;
+            _receivedMap[guid] += (uint)payload.Length;
 
             if (_receivedMap[guid] == totalSize)
             {
